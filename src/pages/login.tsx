@@ -4,6 +4,7 @@ import axios from 'axios';
 import { BASE_URL } from '../../constants';
 import showToast from '../../utils/toaster';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
   const [submittedData, setSubmittedData] = useState<any | null>(null);
@@ -19,6 +20,18 @@ const Login: React.FC = () => {
     },
   });
 
+
+  const navigate = useNavigate();
+  const token = localStorage.getItem('access_token'); // Replace with your token key
+
+  useEffect(() => {
+      if (token) {
+          // If user is logged in, redirect to the dashboard
+          navigate('/dashboard');
+      }
+  }, [token, navigate]);
+
+
   useEffect(() => {
     const loginUser = async () => {
       if (submittedData) {
@@ -27,9 +40,10 @@ const Login: React.FC = () => {
           console.log('Login Successful:///////////////////////', response.data);
           
             const access_token = response.data.token;
-            localStorage.setItem('token', access_token);
+            localStorage.setItem("access_token", access_token);
           
           showToast(response.data.message, "success");
+          navigate('/dashboard');
           // Handle successful login (e.g., redirect to dashboard)
         } catch (error) {
           console.error('Login Error:', error);
@@ -80,7 +94,7 @@ const Login: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-md shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-200"
+            className="w-full py-2 bg-gray-700  text-white font-semibold rounded-md shadow-md hover:bg-grey-900 focus:outline-none focus:ring-2 focus:ring-grey-500 focus:ring-offset-2 transition duration-200"
           >
             Login
           </button>
