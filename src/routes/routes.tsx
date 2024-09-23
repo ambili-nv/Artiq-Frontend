@@ -28,8 +28,8 @@
 
 
 
-import React, { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import  { lazy, Suspense } from "react";
+import { BrowserRouter as  Routes, Route } from "react-router-dom";
 import PrivateRoute from './privateRoutes'; // Adjust the path as needed
 
 const Login = lazy(() => import('../pages/login'));
