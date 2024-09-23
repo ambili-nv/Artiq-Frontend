@@ -107,7 +107,7 @@ const Navbar: React.FC = () => {
                     <Link to="/my-articles" className="hover:bg-gray-700 px-3 py-2 rounded">
                         My Articles
                     </Link>
-                    <Link to="/settings" className="hover:bg-gray-700 px-3 py-2 rounded">
+                    <Link to="/user-profile" className="hover:bg-gray-700 px-3 py-2 rounded">
                         Settings
                     </Link>
                 </div>
@@ -148,7 +148,7 @@ const Navbar: React.FC = () => {
                     <Link to="/my-articles" className="block px-4 py-2 hover:bg-gray-700">
                         My Articles
                     </Link>
-                    <Link to="/settings" className="block px-4 py-2 hover:bg-gray-700">
+                    <Link to="/user-profile" className="block px-4 py-2 hover:bg-gray-700">
                         Settings
                     </Link>
                 </div>

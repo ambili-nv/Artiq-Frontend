@@ -12,6 +12,7 @@ interface Article {
     images: string[];
     likes: string[]; // Assuming an array of user IDs
     dislikes: string[]; // Assuming an array of user IDs
+    tags: string[]; // Add tags field
 }
 
 const ArticleDetail: React.FC = () => {
@@ -27,6 +28,8 @@ const ArticleDetail: React.FC = () => {
                 setArticle(response.data);
                 setLikes(response.data.likes.length); // Set initial likes
                 setDislikes(response.data.dislikes.length); // Set initial dislikes
+                console.log(response.data,"dataaaaaaaaaaaa//////////");
+                
             } catch (error) {
                 console.error("Error fetching article:", error);
             }
@@ -38,7 +41,7 @@ const ArticleDetail: React.FC = () => {
     const handleLike = async () => {
         try {
             const token = localStorage.getItem('access_token'); // Get the token from localStorage
-    
+
             const response = await axios.post(
                 `${BASE_URL}/article/${id}/reaction`,
                 { reaction: 'like' },
@@ -54,11 +57,11 @@ const ArticleDetail: React.FC = () => {
             console.error("Error liking article:", error);
         }
     };
-    
+
     const handleDislike = async () => {
         try {
             const token = localStorage.getItem('access_token'); // Get the token from localStorage
-    
+
             const response = await axios.post(
                 `${BASE_URL}/article/${id}/reaction`,
                 { reaction: 'dislike' },
@@ -74,7 +77,6 @@ const ArticleDetail: React.FC = () => {
             console.error("Error disliking article:", error);
         }
     };
-    
 
     if (!article) return <div>Loading...</div>;
 
@@ -82,8 +84,13 @@ const ArticleDetail: React.FC = () => {
         <div className="max-w-4xl mx-auto p-5">
             <h2 className="text-2xl font-bold mb-4">{article.title}</h2>
             <img src={article.images[0]} alt={article.title} className="w-full h-60 object-cover mb-4" />
-            <div className="text-left" dangerouslySetInnerHTML={{ __html: article.description }} />
-            
+
+            <div className="text-left">
+                <div dangerouslySetInnerHTML={{ __html: article.description }} />
+                <div className='text-blue-500'>{article.tags.join(', ')}</div>
+            </div>
+
+
             <div className="flex items-center mt-4">
                 <button onClick={handleLike} className="flex items-center mr-4">
                     <FaThumbsUp className="text-green-500" />
@@ -99,3 +106,4 @@ const ArticleDetail: React.FC = () => {
 };
 
 export default ArticleDetail;
+

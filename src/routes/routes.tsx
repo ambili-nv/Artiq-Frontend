@@ -37,6 +37,9 @@ const Register = lazy(() => import('../pages/register'));
 const CreateArticle = lazy(() => import('../pages/CreateArticle'));
 const Article = lazy(() => import('../pages/ArticleList'));
 const ArticleDetail = lazy(() => import('../pages/ArticleDetail'));
+const MyArticles = lazy(() => import('../pages/myArticles'));
+const EditArticle = lazy(() => import('../pages/editArticle'));
+const ProfilePage = lazy(() => import('../pages/profile'));
 
 export const MainRouter = () => {
     return (
@@ -49,6 +52,9 @@ export const MainRouter = () => {
                 <Route path="/create-article" element={<PrivateRoute element={<CreateArticle />} />} />
                 <Route path="/dashboard" element={<PrivateRoute element={<Article />} />} />
                 <Route path="/dashboard/article-details/:id" element={<PrivateRoute element={<ArticleDetail />} />} />
+                <Route path="/my-articles" element={<PrivateRoute element={<MyArticles />} />} />
+                <Route path="/edit-article/:id" element={<PrivateRoute element={<EditArticle />} />} />
+                <Route path="/user-profile" element={<PrivateRoute element={<ProfilePage />} />} />
             </Routes>
         </Suspense>
     );

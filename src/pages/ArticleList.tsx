@@ -88,28 +88,41 @@ const ArticleList: React.FC = () => {
     const [articles, setArticles] = useState<Article[]>([]);
     const navigate = useNavigate();
 
-
-    // const token = localStorage.getItem('access_token'); // Replace with your token key
-
     // useEffect(() => {
-    //     if (token) {
-    //         // If user is logged in, redirect to the dashboard
-    //         navigate('/dashboard');
-    //     }
-    // }, [token, navigate]);
+    //     const fetchArticles = async () => {
+    //         try {
+    //             const response = await axios.get(`${BASE_URL}/articles`);
+    //             setArticles(response.data);
+    //         } catch (error) {
+    //             console.error("Error fetching articles:", error);
+    //         }
+    //     };
+
+    //     fetchArticles();
+    // }, []);
+
 
     useEffect(() => {
         const fetchArticles = async () => {
             try {
-                const response = await axios.get(`${BASE_URL}/articles`);
+                // Retrieve the token from local storage or context
+                const token = localStorage.getItem('access_token'); // Adjust this based on where you store your token
+    
+                const response = await axios.get(`${BASE_URL}/articles`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`, // Set the Authorization header
+                    },
+                });
+    
                 setArticles(response.data);
             } catch (error) {
                 console.error("Error fetching articles:", error);
             }
         };
-
+    
         fetchArticles();
     }, []);
+    
 
     return (
         <div className="max-w-4xl mx-auto p-5">
@@ -132,3 +145,66 @@ const ArticleList: React.FC = () => {
 };
 
 export default ArticleList;
+
+
+// // Dashboard.tsx
+// import React, { useEffect, useState } from 'react';
+// import axios from 'axios';
+// import { Link } from 'react-router-dom';
+// import { BASE_URL } from '../../constants';
+// import { useAuth } from '../AuthContext';
+
+// interface Article {
+//     _id: string;
+//     title: string;
+//     images: string[];
+//     categories: string[]; // Assuming articles have a categories field
+// }
+
+// const ArticleList: React.FC = () => {
+//     const [articles, setArticles] = useState<Article[]>([]);
+//     const { user } = useAuth(); // Get user info including preferences
+//     console.log(user,"userauth /////");
+    
+
+//     useEffect(() => {
+//         const fetchArticles = async () => {
+//             try {
+//                 const response = await axios.get(`${BASE_URL}/articles`);
+//                 // Filter articles based on user preferences
+//                 const filteredArticles = response.data.filter((article: Article) =>
+//                     //@ts-ignore
+//                     user.preferences.some((pref: string) => article.categories.includes(pref))
+//                 );
+//                 setArticles(filteredArticles);
+//             } catch (error) {
+//                 console.error("Error fetching articles:", error);
+//             }
+//         };
+
+//         if (user && user.preferences.length) {
+//             fetchArticles();
+//         }
+//     }, [user]);
+
+//     return (
+//         <div className="max-w-4xl mx-auto p-5">
+//             <h2 className="text-2xl font-bold mb-4">Your Articles</h2>
+//             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+//                 {articles.map((article) => (
+//                     <div key={article._id} className="bg-white shadow-md rounded-lg overflow-hidden">
+//                         <img src={article.images[0]} alt={article.title} className="w-full h-40 object-cover" />
+//                         <div className="p-4">
+//                             <h3 className="text-lg font-bold">{article.title}</h3>
+//                             <Link to={`article-details/${article._id}`} className="text-blue-500 hover:underline">
+//                                 Read More
+//                             </Link>
+//                         </div>
+//                     </div>
+//                 ))}
+//             </div>
+//         </div>
+//     );
+// };
+
+// export default ArticleList;
