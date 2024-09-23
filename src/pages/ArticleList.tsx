@@ -75,7 +75,7 @@
 // ArticleList.tsx
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link,useNavigate } from 'react-router-dom';
 import { BASE_URL } from '../../constants';
 
 interface Article {
@@ -86,7 +86,7 @@ interface Article {
 
 const ArticleList: React.FC = () => {
     const [articles, setArticles] = useState<Article[]>([]);
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
 
     // useEffect(() => {
     //     const fetchArticles = async () => {
