@@ -84,6 +84,7 @@ type SignupValidation = Partial<{
     confirmPassword: string;
     phoneNumber: string;
     preferences: string; // Add preferences to validation type
+    dob: string;
 }>;
 
 const validateSignUp = (values: {
@@ -93,8 +94,9 @@ const validateSignUp = (values: {
     confirmPassword: string;
     phoneNumber: string;
     preferences: string[]; // Add preferences here
+    dob: string; 
 }) => {
-    const { name, email, password, confirmPassword, phoneNumber, preferences } = values;
+    const { name, email, password, confirmPassword, phoneNumber, preferences,dob } = values;
     const errors: SignupValidation = {};
 
     // Name validate
@@ -143,6 +145,20 @@ const validateSignUp = (values: {
     // Preferences Validation
     if (!preferences || preferences.length === 0) {
         errors.preferences = 'Please select at least one article preference';
+    }
+
+
+    if (!dob.trim().length) {
+        errors.dob = "Date of birth is required";
+    } else {
+        const dobDate = new Date(dob);
+        const today = new Date();
+        const age = today.getFullYear() - dobDate.getFullYear();
+        const monthDiff = today.getMonth() - dobDate.getMonth();
+
+        if (age < 18 || (age === 18 && monthDiff < 0)) {
+            errors.dob = "You must be at least 18 years old";
+        }
     }
 
     return errors;
