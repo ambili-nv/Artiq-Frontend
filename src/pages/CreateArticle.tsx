@@ -109,7 +109,7 @@
 //                         }
 //                     );
 //                     showToast("Article created succesfully","success")
-                    
+
 //                     // Reset form after successful submission
 //                     setTitle('');
 //                     setDescription('');
@@ -226,22 +226,24 @@
 
 
 
-import React, { useState, useEffect } from 'react';
+
+
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import Cropper from 'react-cropper';
+import 'cropperjs/dist/cropper.css'; // Import Cropper.js CSS
 import uploadImagesToCloudinary from '../API/uploadImages';
 import { BASE_URL } from '../../constants';
 import showToast from '../../utils/toaster';
-import Cropper from 'react-cropper';
-import 'cropperjs/dist/cropper.css'; // Import Cropper.js CSS
 
 const CreateArticle: React.FC = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [croppedImage, setCroppedImage] = useState<string | null>(null);
+    const [croppedImage, setCroppedImage] = useState<string | null>(null); // String for displaying cropped image
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
     const [tags, setTags] = useState('');
     const [category, setCategory] = useState('');
@@ -253,15 +255,8 @@ const CreateArticle: React.FC = () => {
     const [tagsError, setTagsError] = useState('');
     const [categoryError, setCategoryError] = useState('');
 
-    const [cropper, setCropper] = useState<any>(null);
-
-    useEffect(() => {
-        if (cropper) {
-            setTimeout(() => {
-                // You can add any Cropper operations here if needed
-            }, 100);
-        }
-    }, [cropper]);
+    // Ref for Cropper
+    const cropperRef = useRef<Cropper | null>(null);  // Initialize as null
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -276,14 +271,22 @@ const CreateArticle: React.FC = () => {
     };
 
     const cropImage = () => {
-        if (cropper && typeof cropper.getCroppedCanvas === 'function') {
-            const croppedCanvas = cropper.getCroppedCanvas();
-            const base64 = croppedCanvas.toDataURL();
-            setCroppedImage(base64);
-            setImagePreview(null); // Hide original preview after cropping
+        const cropper = cropperRef.current;
+        if (cropper) {
+            cropper.getCroppedCanvas().toBlob((blob: Blob | null) => {
+                if (blob) {
+                    // Convert Blob to object URL to show preview
+                    const croppedPreview = URL.createObjectURL(blob);
+                    setCroppedImage(croppedPreview); // Set the cropped image preview
+                    setImagePreview(null); // Hide original preview after cropping
+                } else {
+                    console.error('Canvas is empty');
+                    showToast("Failed to process image", "error");
+                }
+            }, 'image/jpeg');
         } else {
             console.error('Cropper instance not available or not properly initialized');
-            showToast("Failed to process image","error")
+            showToast("Failed to process image", "error");
         }
     };
 
@@ -305,8 +308,8 @@ const CreateArticle: React.FC = () => {
             setDescriptionError('Description cannot be empty.');
             isValid = false;
         }
-        if (!imageFile) {
-            setImageError('Image must be uploaded.');
+        if (!imageFile && !croppedImage) {
+            setImageError('Image must be uploaded and cropped.');
             isValid = false;
         }
         if (!tags.trim()) {
@@ -329,14 +332,27 @@ const CreateArticle: React.FC = () => {
         }
 
         try {
+            let imageToUpload: File | null = null;
+
             if (croppedImage) {
-                const url = await uploadImagesToCloudinary([new File([croppedImage.split(',')[1]], 'image.jpg')]);
+                // Convert cropped image (Blob) to File
+                const response = await fetch(croppedImage);
+                const blob = await response.blob();
+                imageToUpload = new File([blob], imageFile?.name || 'croppedImage.jpg', {
+                    type: 'image/jpeg',
+                });
+            } else if (imageFile) {
+                imageToUpload = imageFile;
+            }
+
+            if (imageToUpload) {
+                const url = await uploadImagesToCloudinary([imageToUpload]);
                 //@ts-ignore
                 setUploadedImageUrl(url[0]); // Assuming the upload function returns an array
             }
         } catch (error) {
             console.error("Image upload failed:", error);
-            showToast("Failed to upload image","error")
+            showToast("Failed to upload image", "error");
         }
     };
 
@@ -346,7 +362,7 @@ const CreateArticle: React.FC = () => {
                 try {
                     const token = localStorage.getItem('access_token');
                     await axios.post(
-                        `${BASE_URL}/create-article`, 
+                        `${BASE_URL}/create-article`,
                         {
                             title,
                             description,
@@ -361,8 +377,8 @@ const CreateArticle: React.FC = () => {
                             },
                         }
                     );
-                    showToast("Article created successfully","success")
-                    
+                    showToast("Article created successfully", "success");
+
                     // Reset form after successful submission
                     setTitle('');
                     setDescription('');
@@ -372,7 +388,7 @@ const CreateArticle: React.FC = () => {
                     setTags('');
                     setCategory('');
                 } catch (error) {
-                    showToast("Failed to submit article","error")
+                    showToast("Failed to submit article", "error");
                     console.error("Failed to submit article:", error);
                 }
             };
@@ -385,6 +401,7 @@ const CreateArticle: React.FC = () => {
         <div className="max-w-4xl mx-auto p-5">
             <h2 className="text-2xl font-bold mb-4">Create New Article</h2>
             <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+                {/* Article Title */}
                 <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="title">
                         Article Title
@@ -394,20 +411,24 @@ const CreateArticle: React.FC = () => {
                         id="title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${titleError ? 'border-red-500' : ''}`}
                         required
                     />
                     {titleError && <p className="text-red-500 text-sm">{titleError}</p>}
                 </div>
+
+                {/* Description */}
                 <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2">Description</label>
-                    <ReactQuill 
-                        value={description} 
-                        onChange={setDescription} 
+                    <ReactQuill
+                        value={description}
+                        onChange={setDescription}
                         className="h-40"
                     />
                     {descriptionError && <p className="text-red-500 text-sm">{descriptionError}</p>}
                 </div>
+
+                {/* Upload Image */}
                 <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="image">
                         Upload Image
@@ -416,28 +437,54 @@ const CreateArticle: React.FC = () => {
                         type="file"
                         id="image"
                         onChange={handleImageChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${imageError ? 'border-red-500' : ''}`}
                         accept="image/*"
                     />
                     {imageError && <p className="text-red-500 text-sm">{imageError}</p>}
                 </div>
 
+                {/* Crop Image */}
                 {imagePreview && (
                     <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-bold mb-2">Crop Image:</label>
                         <Cropper
                             src={imagePreview}
-                            aspectRatio={1 / 1}
+                            style={{ height: 400, width: '100%' }}
+                            aspectRatio={1}
                             guides={false}
-                            ref={(cropper) => setCropper(cropper)}
-                            className="h-64 w-full"
+                            viewMode={1}
+                            background={false}
+                            responsive={true}
+                            autoCropArea={1}
+                            checkOrientation={false}
+                            onInitialized={(instance) => {
+                                cropperRef.current = instance as any;  // Casting to any to fix the readonly issue
+                            }}
+                            className="mb-2"
                         />
-                        <button onClick={cropImage} className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        <button
+                            type="button"
+                            onClick={cropImage}
+                            className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        >
                             Crop Image
                         </button>
                     </div>
                 )}
 
+                {/* Cropped Image Preview */}
+                {croppedImage && (
+                    <div className="mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2">Cropped Image Preview:</label>
+                        <img
+                            src={croppedImage}
+                            alt="Cropped Preview"
+                            className="w-64 h-64 object-cover"
+                        />
+                    </div>
+                )}
+
+                {/* Tags */}
                 <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="tags">
                         Tags (comma-separated)
@@ -447,10 +494,13 @@ const CreateArticle: React.FC = () => {
                         id="tags"
                         value={tags}
                         onChange={(e) => setTags(e.target.value)}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${tagsError ? 'border-red-500' : ''}`}
+                        required
                     />
                     {tagsError && <p className="text-red-500 text-sm">{tagsError}</p>}
                 </div>
+
+                {/* Category */}
                 <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="category">
                         Category
@@ -459,25 +509,24 @@ const CreateArticle: React.FC = () => {
                         id="category"
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${categoryError ? 'border-red-500' : ''}`}
                         required
                     >
                         <option value="">Select a category</option>
-                        <option value="sports">Sports</option>
-                        <option value="politics">Politics</option>
-                        <option value="space">Space</option>
-                        <option value="technology">Technology</option>
-                        <option value="travel">Travel</option>
-                        <option value="health">Health</option>
+                        <option value="tech">Tech</option>
+                        <option value="life">Life</option>
+                        <option value="science">Science</option>
                     </select>
                     {categoryError && <p className="text-red-500 text-sm">{categoryError}</p>}
                 </div>
+
+                {/* Submit Button */}
                 <div className="flex items-center justify-between">
                     <button
                         type="submit"
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                     >
-                        Create Article
+                        Submit Article
                     </button>
                 </div>
             </form>
